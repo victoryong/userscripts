@@ -15,6 +15,16 @@ function remove_elems(selectors) {
 	}
 }
 
+function polysemant() {
+    var polysemant = $('.polysemant-list')
+    if (polysemant.length > 0) {
+        polysemant.width('98%')
+        polysemant.children().width('98%')
+        polysemant.css('margin-bottom', '5px')
+        $('body > div.body-wrapper > div.content-wrapper').prepend(polysemant)
+    }
+}
+
 (function () {
 	'use strict'
 	// Baike
@@ -25,6 +35,8 @@ function remove_elems(selectors) {
 	$('body.wiki-lemma .feature_poster .poster').width('98%')
 	$('body.wiki-lemma .feature_poster .poster .con').width('70%')
 	$('body.wiki-lemma .feature_poster .poster .summary-pic').width('22%')
+
+    polysemant()
 
 	// Remove
 	remove_elems([
@@ -46,4 +58,6 @@ function remove_elems(selectors) {
 	// Modify styles
 	$('body.wiki-lemma div.para').css('font-size', '15px').css('line-height', '1.6')
 	$('sub').css('font-size', '90%')
+
+    
 })()
