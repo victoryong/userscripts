@@ -145,6 +145,25 @@ function hover_style() {
 	console.log('[INFO] set hover styles ended')
 }
 
+function remove_home_page_ad() {
+	var captions = $$('div.b_caption')
+	var ad_captions = []
+
+	captions.forEach(function(e) {
+		// console.log(e)
+		var p_tags = e.getElementsByTagName('p')
+		if (p_tags.length > 0) {
+			var first_p_tag = p_tags[0]
+			if (first_p_tag.className.length > 0) {
+				// ad
+				e.parentNode.remove()
+			}
+		}
+
+	})
+	console.log('[INFO] removed home page ads')
+}
+
 
 /********* main entrance **********/
 (function() {
@@ -153,4 +172,6 @@ function hover_style() {
 	remove_elements();
 	modify_styles();
 	hover_style();
+
+	remove_home_page_ad()
 })()
