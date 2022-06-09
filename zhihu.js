@@ -35,8 +35,8 @@ function async_optimize(){
     __remove_elems([
 		'div.TopstoryItem--advertCard', // 主界面中插在每条文章中的广告
 		'div.Feed[data-za-extra-module*="video_id"]',  // 视频
+        'div.Card.TopstoryItem.TopstoryItem-isRecommend:empty', // 视频外层div
 	])
-	
 }
 
 
