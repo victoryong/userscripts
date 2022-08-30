@@ -41,7 +41,7 @@ function __modify_elem_style(style_json_arr) {
 	//     } else if(st == 'border') {
 	//         tmp = function () { if(!is_invalid(this)) { this.style.border = attr_val }}
 	//         console.log(ele, '    border=' + attr_val)
-	//     } else if 
+	//     } else if
 
 	//     // if ele is a list of elements, execute the new style on each element
 	//     if (ele instanceof Node){
@@ -84,7 +84,7 @@ function __modify_elem_style(style_json_arr) {
 		style_element.type = 'text/css'
 		style_element.appendChild(document.createTextNode('\n'))
 
-		for (var i in css_text_nodes) {
+		for (i in css_text_nodes) {
 			style_element.appendChild(css_text_nodes[i])
 		}
 		console.log(style_element)
@@ -99,6 +99,7 @@ function remove_elements() {
 	__remove_elems([
 		'li.b_ad',
 		'div.sb_add.sb_adTA',
+		'div#ev_talkbox_wrapper'
 	])
 	console.log('[INFO] remove ended. ')
 }
@@ -147,18 +148,22 @@ function hover_style() {
 
 function remove_home_page_ad() {
 	var captions = $$('div.b_caption')
-	var ad_captions = []
 
 	captions.forEach(function(e) {
 		// console.log(e)
 		var p_tags = e.getElementsByTagName('p')
 		if (p_tags.length > 0) {
-			var first_p_tag = p_tags[0]
-			if (first_p_tag.className.length > 0) {
-				// ad
+			// var first_p_tag = p_tags[0]
+			// if (first_p_tag.className.length > 0) {
+			// 	// ad
+			// 	e.parentNode.remove()
+			// } 
+			var ad_span = p_tags[0].getElementsByTagName('span')[p_tags[0].getElementsByTagName('span').length - 1]
+			if (ad_span.innerText == "广告") {
 				e.parentNode.remove()
 			}
 		}
+
 
 	})
 	console.log('[INFO] removed home page ads')
