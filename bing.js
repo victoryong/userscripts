@@ -157,11 +157,16 @@ function remove_home_page_ad() {
 			// if (first_p_tag.className.length > 0) {
 			// 	// ad
 			// 	e.parentNode.remove()
-			// } 
+			// }
 			var ad_span = p_tags[0].getElementsByTagName('span')[p_tags[0].getElementsByTagName('span').length - 1]
 			if (ad_span.innerText == "广告") {
 				e.parentNode.remove()
 			}
+
+            var ad_p_class = p_tags[0].className
+            if (! ad_p_class.contains(' ') && ! ad_p_class.contains('_') && ad_p_class.length == 9) {
+                e.parentNode.remove()
+            }
 		}
 
 
