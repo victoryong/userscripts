@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ynote Page Optimization
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      3.0
 // @description  try to take over the world!
 // @author       Victor X
 // @match        https://note.youdao.com/web/
@@ -9,123 +9,29 @@
 // @grant        none
 // ==/UserScript==
 
-// define a global flag map for recording the status of all the actions
-// FLAGS:
-//   data: Map(key1: {func, delaytime, isForever, execTimes, handler}, key2: ....),
-//   attr: FLAGS.DEFAULT: obj of default configuration {maxtimes, delaytime, finished}
-const FLAGS = new Map()
-FLAGS.DEFAULT = {
-  MAXTIMES: 5,
-  DELAYTIME: 1000,
-  FINISHED: 0
-}
-
-FLAGS.isFinished = function (k) { return !this.get(k).isForever && this.get(k).execTimes >= this.FINISHED }
-
-FLAGS.setInterval = function (k) {
-  var thisFlag = this.get(k)
-  thisFlag.handler !== undefined && clearInterval(thisFlag.handler)
-  thisFlag.handler = setInterval(() => {
-    if (!FLAGS.isFinished(k)) {
-      thisFlag.execTimes += 1
-      FLAGS.set(k, thisFlag)
-      thisFlag.func()
-    } else {
-      console.log('[*] task: ', k, 'exceed MAXTIMES')
-      clearInterval(thisFlag.handler)
-    }
-  }, thisFlag.delaytime);
-}
-
-FLAGS.run = function (k) { this.setInterval(k) }
-
-FLAGS.bulkAdd = function (taskList) {
-  taskList.forEach(function (t) {
-    console.log('[+] register task:', t[0])
-    t[1].execTimes = -FLAGS.DEFAULT.MAXTIMES
-    t[1].isForever = t[1].isForever || false
-    t[1].delaytime = t[1].delaytime || FLAGS.DEFAULT.DELAYTIME
-    FLAGS.set(t[0], t[1])
-  })
-}
-
-FLAGS.addAndRun = function (taskList) {
-  if (taskList.length > 0 && !Array.isArray(taskList[0])) {
-    taskList = [taskList]
-  }
-  this.bulkAdd(taskList)
-  taskList.forEach(function (t) { FLAGS.run(t[0]) })
-}
-
-FLAGS.makeFinished = function (k) {
-  console.log('[+] task: ', k, 'finished')
-  var thisFlag = this.get(k)
-  thisFlag.execTimes = this.DEFAULT.FINISHED + 1
-  this.set(k, thisFlag)
-}
-
-
 // define some fundamenetal functions of DOM operation
-let _$ = document.querySelector.bind(document)
-let _$$ = document.querySelectorAll.bind(document)
-
-function tryMultiAction(selectors, actionFunc = function (e) { return e && true }) {
-  for (let s of selectors) {
-    tryElementAction(s, actionFunc, true)
+function addStyleBlock(styleText, blkId) {
+  let s = document.createElement('style')
+  if (blkId){
+    s.id = blkId
   }
+  s.innerHTML = styleText
+  document.head.appendChild(s)
 }
 
-function tryElementAction(selector, actionFunc = function (e) { return e && true }, onAll = false) {
-  try {
-    const el = onAll ? _$$(selector) : [_$(selector)]
-
-    for (let e of el) {
-      if (!actionFunc(e)) {
-        return false
-      }
-    }
-    return true
-  } catch (err) {
-    console.log('[-]', selector, err)
-    return false
+function hideElements(selectors) {
+  if (Array.isArray(selectors)) {
+    selectors = Array.join(selectors)
   }
-}
-
-function tryRemoveElements(selector, judgeFunc = undefined, rmAll = false) {
-  let tryFunc = Array.isArray(selector) && tryMultiAction || tryElementAction
-  return tryFunc(selector, function (e) {
-    if (judgeFunc && !judgeFunc(e)) return false
-    e.remove()
-    return true
-  }, rmAll)
+  addStyleBlock(selectors + " { display: none } ", 'remove-elems')
 }
 
 // ynote page actions
-function removeSidebarAd() {
-  tryRemoveElements('ad-component', undefined, true)
-  //tryElementAction('#flexible-list-left recent > div > div.list-bd.noItemNum', (e) => { $(e).removeClass('adList') })
-  //tryElementAction('#file-outer', (e) => { $(e).removeClass('adListTag') })
-}
+hideElements([
+  'ad-component'  // ad over file list bar
+])
+addStyleBlock(
+  ".list .list-bd.adList { top: 72px !important; } .list .list-bd.adListTag { top: 110px !important; } " +
+  'list > div.list recent > div > div.list-bd { top: 0px; position: relative; }'
+)
 
-function removeVipAd() {
-  tryElementAction('list > div.list recent > div > div.list-bd', function (e) {
-    if (!e) return false
-    e.style.top = '0px'
-    e.style.position = 'relative'
-    return true
-  }
-  )
-}
-
-
-let __o = (f) => { return { func: f, isForever: true } }
-const tasks = [
-  ['rm_sidebar_ad', __o(removeSidebarAd)],
-  ['rm_vip_ad', __o(removeVipAd)]
-]
-
-FLAGS.addAndRun(tasks)
-
-var s = document.createElement('style')
-s.innerHTML = ".list .list-bd.adList { top: 72px !important; } .list .list-bd.adListTag { top: 110px !important; }";
-document.head.appendChild(s)
