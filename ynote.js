@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ynote Page Cleaner
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.2
 // @description  try to take over the world!
 // @author       Victor X
 // @match        https://note.youdao.com/web/
@@ -32,9 +32,11 @@ hideElements([
   '.sidebar .expand-layout .sidebar-footer .sidebar-footer-links',  // bottom left buttons(when 3 cols)
   '.sidebar-collapse-footer-web',  // bottom left buttons(when 2 cols),
   '.personal-container .personal-text-box',   // personal info vip flag
+  '#flexible-list-right > div.detail > note > div > upgrade-v1-hint > div > div.upgrade-v1-content > div > p:nth-child(2)',  // upgrade note tip
 ])
 addStyleBlock(
   ".list .list-bd.adList { top: 72px !important; } .list .list-bd.adListTag { top: 110px !important; } " +
-  'list > div.list recent > div > div.list-bd { top: 0px; position: relative; }'
+  'list > div.list recent > div > div.list-bd { top: 0px; position: relative; }' + 
+  '.upgrade-v1-hint-container { height: 30px !important; }'
 )
 
