@@ -10,42 +10,73 @@
 // ==/UserScript==
 
 // define a global flag map for recording the status of all the actions
+// FLAGS: 
+//   data: Map(key1: {func, delaytime, isForever, execTimes, handler}, key2: ....), 
+//   attr: FLAGS.DEFAULT: obj of default configuration {maxtimes, delaytime, finished}
 const FLAGS = new Map()
-FLAGS.MAXTIMES = 5
-FLAGS.DELAYTIME = 2000
-FLAGS.FINISHED = 0
-FLAGS.isFinished = function (k) { return this.get(k) >= this.FINISHED }
-FLAGS.setTimeout = function (k, func) {
-    if (!this.isFinished(k)) {
-        this.set(k, this.get(k) + 1)
-        setTimeout(function (){ func(k) }, this.DELAYTIME)
-    } else if (!this.isSucc(k)) {
-        console.log('[*] task: ', k, 'exceed MAXTIMES')
-    }
+FLAGS.DEFAULT = {
+  MAXTIMES: 5,
+  DELAYTIME: 1000,
+  FINISHED: 0
 }
-FLAGS.bulkAdd = function (keyList) {
-  keyList.forEach(function (k) {
-    console.log('[+] register task:', k)
-    FLAGS.set(k, -FLAGS.MAXTIMES)
+
+FLAGS.isFinished = function (k) { return !this.get(k).isForever && this.get(k).execTimes >= this.FINISHED }
+// FLAGS.setTimeout = function (k) {
+//     if (!this.isFinished(k)) {
+//         var thisFlag = this.get(k)
+//         thisFlag.execTimes += 1
+//         this.set(k, thisFlag)
+//         setTimeout(thisFlag.func, thisFlag.delaytime)
+//     } else {
+//         console.log('[*] task: ', k, 'exceed MAXTIMES')
+//     }
+// }
+FLAGS.setInterval = (k) => {
+  var thisFlag = this.get(k)
+  thisFlag.handler !== undefined && clearInterval(thisFlag.handler)
+  thisFlag.handler = setInterval(() => {
+    if (!FLAGS.isFinished(k)) {
+      thisFlag.execTimes += 1
+      FLAGS.set(k, thisFlag)
+      thisFlag.func()
+    } else {
+        console.log('[*] task: ', k, 'exceed MAXTIMES')
+        clearInterval(thisFlag.handler)
+    }
+  }, thisFlag.delaytime);
+}
+FLAGS.run = function (k) { this.setInterval(k) }
+FLAGS.bulkAdd = function (taskList) {
+  taskList.forEach(function (t) {
+    console.log('[+] register task:', t[0])
+    t[1].execTimes = -FLAGS.DEFAULT.MAXTIMES
+    t[1].isForever = t[1].isForever || false
+    t[1].delaytime = t[1].delaytime || FLAGS.DEFAULT.DELAYTIME
+    FLAGS.set(t[0], t[1])
   })
 }
 FLAGS.addAndRun = function (taskList) {
   if (taskList.length > 0 && !Array.isArray(taskList[0])) {
     taskList = [taskList]
   }
-  FLAGS.bulkAdd(taskList.map(function (t){ return t[0]}))
-  taskList.forEach(function (t){ setTimeout( function (){ t[1](t[0]) }, t[2]) })
+  this.bulkAdd(taskList)
+  taskList.forEach(function (t){ FLAGS.run(t[0]) })
 }
 FLAGS.makeFinished = function (k) {
     console.log('[+] task: ', k, 'finished')
-    this.set(k, this.FINISHED + 1)
+    var thisFlag = this.get(k)
+    thisFlag.execTimes = this.DEFAULT.FINISHED + 1
+    this.set(k, thisFlag)
 }
 
 
 // define some fundamenetal functions of DOM operation
-function tryElementAction(selector, actionFunc = function (e){ return true }, onAll = false) {
+let _$ = document.querySelector.bind(document)
+let _$$ = document.querySelectorAll.bind(document)
+
+function tryElementAction(selector, actionFunc = function (e){ return e && true }, onAll = false) {
   try {
-    const el = onAll ? $$(selector) : [$(selector)]
+    const el = onAll ? _$$(selector) : [_$(selector)]
 
     for (let e of el) {
       if (!actionFunc(e)) {
@@ -61,43 +92,29 @@ function tryElementAction(selector, actionFunc = function (e){ return true }, on
 
 function tryRemoveElement(selector, judgeFunc = undefined, rmAll = false) {
   return tryElementAction(selector, function (e){
-    if (!(judgeFunc == undefined || judgeFunc(e))) return false
+    if (judgeFunc && !judgeFunc(e)) return false
     e.remove()
     return true
   }, rmAll)
 }
 
+// function tryElementActionAndSetTimeout(selector, flagKey, thisFunc, actionFunc = function (e){ return true }, onAll = false) {
+//   if (tryElementAction(selector, actionFunc, onAll)) {
+//     return true
+//   }
+//     console.log('thisFuck:', thisFunc)
+//   FLAGS.setTimeout(flagKey, thisFunc)
+//   return false
+// }
 
-function tryElementActionAndSetTimeout(selector, flagKey, thisFunc, actionFunc = function (e){ return true }, onAll = false) {
-  if (tryElementAction(selector, actionFunc, onAll)) {
-    return true
-  }
-    console.log('thisFuck:', thisFunc)
-  FLAGS.setTimeout(flagKey, thisFunc)
-  return false
+// ynote page actions
+function removeSidebarAd(){
+  tryRemoveElement('ad-component', rmAll=true)
+  tryElementAction('#flexible-list-left recent > div > div.list-bd.noItemNum', (e) => {e.removeClass('adList')} )
 }
 
-//
-function removeScreenAd(t){
-    return tryElementActionAndSetTimeout(
-    'ad-component',//[adtype="screen"]',
-    t[0],
-    t[1],
-    function (e){
-      if (!e) return false
-      e.remove()
-      return true
-    },
-    true
-  )
-}
-
-function removeVipAd(t){
-    return tryElementActionAndSetTimeout(
-    'list > div.list recent > div > div.list-bd',
-    t[0],
-    t[1],
-    function (e){
+function removeVipAd(){
+  tryElementAction('list > div.list recent > div > div.list-bd', function (e){
       if (!e) return false
         e.style.top = '0px'
         e.style.position = 'relative'
@@ -106,43 +123,29 @@ function removeVipAd(t){
   )
 }
 
-function removeSidebarAd(t){
-    return tryElementActionAndSetTimeout(
-    'ad-component',
-    t[0],
-    t[1],
-    function (e){
-      e.remove()
-      jQuery('#flexible-list-left recent > div > div.list-bd.noItemNum').removeClass('adList')
-      return false
-    },
-    true
-  )
-}
 
-function dynamicResetList(t){
-    return tryElementActionAndSetTimeout(
-    'ul.tree-container',
-    t[0],
-    t[1],
-    function (e){
-      if (!e) return false
-      e.onclick = function () {
-        FLAGS.addAndRun(tasks[1])
-      }
-      return true
-    },
-     true
-  )
-}
+// function dynamicResetList(t){
+//     return tryElementActionAndSetTimeout(
+//     'ul.tree-container',
+//     t[0],
+//     t[1],
+//     function (e){
+//       if (!e) return false
+//       e.onclick = function () {
+//         FLAGS.addAndRun(tasks[1])
+//       }
+//       return true
+//     },
+//      true
+//   )
+// }
 
 
-
+let __o = (f) => { return {func: f, isForever: true} }
 const tasks = [
-    ['rm_screen_ad', removeScreenAd, 1000],
-    ['rm_vip_ad', removeVipAd, 1000],
-    ['rm_sidebar_ad', removeSidebarAd, 1000],
-    ['dynamic_reset_list', dynamicResetList, 1000]
+  ['rm_sidebar_ad', __o(removeSidebarAd)],
+    ['rm_vip_ad', __o(removeVipAd)],
+    // ['dynamic_reset_list', __o(dynamicResetList)]
 ]
 
 // bind onload event
