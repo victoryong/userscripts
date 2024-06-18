@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ynote Page Optimization
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  try to take over the world!
 // @author       Victor X
 // @match        https://note.youdao.com/web/
@@ -10,8 +10,8 @@
 // ==/UserScript==
 
 // define a global flag map for recording the status of all the actions
-// FLAGS: 
-//   data: Map(key1: {func, delaytime, isForever, execTimes, handler}, key2: ....), 
+// FLAGS:
+//   data: Map(key1: {func, delaytime, isForever, execTimes, handler}, key2: ....),
 //   attr: FLAGS.DEFAULT: obj of default configuration {maxtimes, delaytime, finished}
 const FLAGS = new Map()
 FLAGS.DEFAULT = {
@@ -103,8 +103,8 @@ function tryRemoveElements(selector, judgeFunc = undefined, rmAll = false) {
 // ynote page actions
 function removeSidebarAd() {
   tryRemoveElements('ad-component', undefined, true)
-  tryElementAction('#flexible-list-left recent > div > div.list-bd.noItemNum', (e) => { $(e).removeClass('adList') })
-  tryElementAction('#file-outer', (e) => { $(e).removeClass('adListTag') })
+  //tryElementAction('#flexible-list-left recent > div > div.list-bd.noItemNum', (e) => { $(e).removeClass('adList') })
+  //tryElementAction('#file-outer', (e) => { $(e).removeClass('adListTag') })
 }
 
 function removeVipAd() {
@@ -125,3 +125,7 @@ const tasks = [
 ]
 
 FLAGS.addAndRun(tasks)
+
+var s = document.createElement('style')
+s.innerHTML = ".list .list-bd.adList { top: 72px !important; } .list .list-bd.adListTag { top: 110px !important; }";
+document.head.appendChild(s)
