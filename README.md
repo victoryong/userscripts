@@ -1,2 +1,5 @@
 # userscripts
-userscripts writen by myself to run on Tampermonkey because of some optimizing objectives. 
+自编自用浏览器脚本，优化上网体验。
+
+# ynote
+去除页面进入广告、vip广告、文件列表最上方广告等内容。
