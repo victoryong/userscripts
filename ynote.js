@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Ynote Page Optimization
+// @name         Ynote Page Cleaner
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.1
 // @description  try to take over the world!
 // @author       Victor X
 // @match        https://note.youdao.com/web/
@@ -23,12 +23,15 @@ function hideElements(selectors) {
   if (Array.isArray(selectors)) {
     selectors = Array.join(selectors)
   }
-  addStyleBlock(selectors + " { display: none } ", 'remove-elems')
+  addStyleBlock(selectors + " { display: none !important } ", 'remove-elems')
 }
 
 // ynote page actions
 hideElements([
-  'ad-component'  // ad over file list bar
+  'ad-component',  // ad over file list bar
+  '.sidebar .expand-layout .sidebar-footer .sidebar-footer-links',  // bottom left buttons(when 3 cols)
+  '.sidebar-collapse-footer-web',  // bottom left buttons(when 2 cols),
+  '.personal-container .personal-text-box',   // personal info vip flag
 ])
 addStyleBlock(
   ".list .list-bd.adList { top: 72px !important; } .list .list-bd.adListTag { top: 110px !important; } " +
