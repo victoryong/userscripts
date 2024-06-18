@@ -21,17 +21,8 @@ FLAGS.DEFAULT = {
 }
 
 FLAGS.isFinished = function (k) { return !this.get(k).isForever && this.get(k).execTimes >= this.FINISHED }
-// FLAGS.setTimeout = function (k) {
-//     if (!this.isFinished(k)) {
-//         var thisFlag = this.get(k)
-//         thisFlag.execTimes += 1
-//         this.set(k, thisFlag)
-//         setTimeout(thisFlag.func, thisFlag.delaytime)
-//     } else {
-//         console.log('[*] task: ', k, 'exceed MAXTIMES')
-//     }
-// }
-FLAGS.setInterval = (k) => {
+
+FLAGS.setInterval = function (k) {
   var thisFlag = this.get(k)
   thisFlag.handler !== undefined && clearInterval(thisFlag.handler)
   thisFlag.handler = setInterval(() => {
@@ -40,12 +31,14 @@ FLAGS.setInterval = (k) => {
       FLAGS.set(k, thisFlag)
       thisFlag.func()
     } else {
-        console.log('[*] task: ', k, 'exceed MAXTIMES')
-        clearInterval(thisFlag.handler)
+      console.log('[*] task: ', k, 'exceed MAXTIMES')
+      clearInterval(thisFlag.handler)
     }
   }, thisFlag.delaytime);
 }
+
 FLAGS.run = function (k) { this.setInterval(k) }
+
 FLAGS.bulkAdd = function (taskList) {
   taskList.forEach(function (t) {
     console.log('[+] register task:', t[0])
@@ -55,18 +48,20 @@ FLAGS.bulkAdd = function (taskList) {
     FLAGS.set(t[0], t[1])
   })
 }
+
 FLAGS.addAndRun = function (taskList) {
   if (taskList.length > 0 && !Array.isArray(taskList[0])) {
     taskList = [taskList]
   }
   this.bulkAdd(taskList)
-  taskList.forEach(function (t){ FLAGS.run(t[0]) })
+  taskList.forEach(function (t) { FLAGS.run(t[0]) })
 }
+
 FLAGS.makeFinished = function (k) {
-    console.log('[+] task: ', k, 'finished')
-    var thisFlag = this.get(k)
-    thisFlag.execTimes = this.DEFAULT.FINISHED + 1
-    this.set(k, thisFlag)
+  console.log('[+] task: ', k, 'finished')
+  var thisFlag = this.get(k)
+  thisFlag.execTimes = this.DEFAULT.FINISHED + 1
+  this.set(k, thisFlag)
 }
 
 
@@ -74,7 +69,13 @@ FLAGS.makeFinished = function (k) {
 let _$ = document.querySelector.bind(document)
 let _$$ = document.querySelectorAll.bind(document)
 
-function tryElementAction(selector, actionFunc = function (e){ return e && true }, onAll = false) {
+function tryMultiAction(selectors, actionFunc = function (e) { return e && true }) {
+  for (let s of selectors) {
+    tryElementAction(s, actionFunc, true)
+  }
+}
+
+function tryElementAction(selector, actionFunc = function (e) { return e && true }, onAll = false) {
   try {
     const el = onAll ? _$$(selector) : [_$(selector)]
 
@@ -84,73 +85,43 @@ function tryElementAction(selector, actionFunc = function (e){ return e && true 
       }
     }
     return true
-  }catch (err) {
+  } catch (err) {
     console.log('[-]', selector, err)
     return false
   }
 }
 
-function tryRemoveElement(selector, judgeFunc = undefined, rmAll = false) {
-  return tryElementAction(selector, function (e){
+function tryRemoveElements(selector, judgeFunc = undefined, rmAll = false) {
+  let tryFunc = Array.isArray(selector) && tryMultiAction || tryElementAction
+  return tryFunc(selector, function (e) {
     if (judgeFunc && !judgeFunc(e)) return false
     e.remove()
     return true
   }, rmAll)
 }
 
-// function tryElementActionAndSetTimeout(selector, flagKey, thisFunc, actionFunc = function (e){ return true }, onAll = false) {
-//   if (tryElementAction(selector, actionFunc, onAll)) {
-//     return true
-//   }
-//     console.log('thisFuck:', thisFunc)
-//   FLAGS.setTimeout(flagKey, thisFunc)
-//   return false
-// }
-
 // ynote page actions
-function removeSidebarAd(){
-  tryRemoveElement('ad-component', rmAll=true)
-  tryElementAction('#flexible-list-left recent > div > div.list-bd.noItemNum', (e) => {e.removeClass('adList')} )
+function removeSidebarAd() {
+  tryRemoveElements('ad-component', undefined, true)
+  tryElementAction('#flexible-list-left recent > div > div.list-bd.noItemNum', (e) => { $(e).removeClass('adList') })
+  tryElementAction('#file-outer', (e) => { $(e).removeClass('adListTag') })
 }
 
-function removeVipAd(){
-  tryElementAction('list > div.list recent > div > div.list-bd', function (e){
-      if (!e) return false
-        e.style.top = '0px'
-        e.style.position = 'relative'
-      return true
-    }
+function removeVipAd() {
+  tryElementAction('list > div.list recent > div > div.list-bd', function (e) {
+    if (!e) return false
+    e.style.top = '0px'
+    e.style.position = 'relative'
+    return true
+  }
   )
 }
 
 
-// function dynamicResetList(t){
-//     return tryElementActionAndSetTimeout(
-//     'ul.tree-container',
-//     t[0],
-//     t[1],
-//     function (e){
-//       if (!e) return false
-//       e.onclick = function () {
-//         FLAGS.addAndRun(tasks[1])
-//       }
-//       return true
-//     },
-//      true
-//   )
-// }
-
-
-let __o = (f) => { return {func: f, isForever: true} }
+let __o = (f) => { return { func: f, isForever: true } }
 const tasks = [
   ['rm_sidebar_ad', __o(removeSidebarAd)],
-    ['rm_vip_ad', __o(removeVipAd)],
-    // ['dynamic_reset_list', __o(dynamicResetList)]
+  ['rm_vip_ad', __o(removeVipAd)]
 ]
 
-// bind onload event
-window.onload = function (){
-    FLAGS.addAndRun(tasks)
-}
-
-
+FLAGS.addAndRun(tasks)
