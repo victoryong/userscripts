@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ynote Page Cleaner
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.3
 // @description  try to take over the world!
 // @author       Victor X
 // @match        https://note.youdao.com/web/
@@ -21,22 +21,44 @@ function addStyleBlock(styleText, blkId) {
 
 function hideElements(selectors) {
   if (Array.isArray(selectors)) {
-    selectors = Array.join(selectors)
+    selectors = selectors.join()
   }
   addStyleBlock(selectors + " { display: none !important } ", 'remove-elems')
 }
 
+function triggerEvent(selector, eventType) {
+  const targetElement = document.querySelector(selector);
+  if (document.createEvent) {
+    const event = document.createEvent('MouseEvents');
+    event.initEvent(eventType, true, false);
+    targetElement.dispatchEvent(event);
+  } else if (document.createEventObject) {
+    //兼容IE
+    targetElement.fireEvent('on' + eventType);
+  }
+}
+
 // ynote page actions
 hideElements([
-  'ad-component',  // ad over file list bar
-  '.sidebar .expand-layout .sidebar-footer .sidebar-footer-links',  // bottom left buttons(when 3 cols)
-  '.sidebar-collapse-footer-web',  // bottom left buttons(when 2 cols),
-  '.personal-container .personal-text-box',   // personal info vip flag
-  '#flexible-list-right > div.detail > note > div > upgrade-v1-hint > div > div.upgrade-v1-content > div > p:nth-child(2)',  // upgrade note tip
+  'ad-component', // ad over file list bar
+  'div.sidebar-ad.sidebar-ad-yd.sidebar-ad-web', // bottom left buttons(when 3 cols)
+  '.sidebar-collapse-footer-web', // bottom left buttons(when 2 cols),
+  '.personal-container .personal-text-box', // personal info vip flag
+  '#flexible-list-right > div.detail > note > div > upgrade-v1-hint > div > div.upgrade-v1-content > div > p:nth-child(2)', // upgrade note tip
 ])
 addStyleBlock(
   ".list .list-bd.adList { top: 72px !important; } .list .list-bd.adListTag { top: 110px !important; } " +
-  'list > div.list recent > div > div.list-bd { top: 0px; position: relative; }' + 
+  'list > div.list recent > div > div.list-bd { top: 0px; position: relative; }' +
   '.upgrade-v1-hint-container { height: 30px !important; }'
 )
+
+(function (description='changeListMode'){
+    console.log('adfasfd')
+    if ($('#flexible-list-left > div:nth-child(2) > div > div > recent > div > div > file-view > div > div > ul')[0].className === 'list-mode') {
+        return
+    }
+    $('#flexible-list-left > div.list-search.electron-drag > div > div').click()
+    triggerEvent('#flexible-list-left > div.list-search.electron-drag > div > div > ul > li', 'mouseenter')
+    $('#flexible-list-left > div.list-search.electron-drag > div > div > ul > li.widget-menu-item.widget-menu-item_selected > ul > li:nth-child(2)').click()
+})();
 
